@@ -1,0 +1,38 @@
+﻿@inject Finbuckle.MultiTenant.TenantInfo tenantInfo
+@{
+    ViewData["Title"] = "Home Page";
+
+}
+
+@if (User.Identity.IsAuthenticated)
+{
+    <div>
+        <form asp-action="UpdateTenant" method="post" class="form-inline">
+            <div class="form-group">
+                <label>Name:&nbsp;&nbsp;</label>
+                <input type="text" name="name" class="form-control" required value="@tenantInfo.Name" />
+            </div>&nbsp;&nbsp;&nbsp;
+
+            <div class="form-group">
+                <label>Name:&nbsp;&nbsp;</label>
+                <input type="text" name="identifier" class="form-control" required value="@tenantInfo.Identifier" />
+            </div>&nbsp;&nbsp;&nbsp;
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-danger">Update</button>
+            </div>
+        </form>
+    </div>
+
+    <div>
+        <pre style="white-space: pre-wrap;word-break: normal;width: 100%;display: -webkit-inline-box !important;">
+    @Newtonsoft.Json.JsonConvert.SerializeObject(tenantInfo, Newtonsoft.Json.Formatting.Indented, new Newtonsoft.Json.JsonSerializerSettings
+{
+ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+})</pre>
+    </div>
+}
+else
+{
+    <div>Login to the system to view sensitive details.</div>
+}

@@ -1,0 +1,8 @@
+﻿@{
+    ViewData["Title"] = "Privacy";
+}
+
+@foreach (var item in ViewBag.Data)
+{
+<pre style="white-space: pre-wrap;word-break: normal;width: 100%;display: -webkit-inline-box !important;">@Newtonsoft.Json.JsonConvert.SerializeObject(item)</pre>
+}

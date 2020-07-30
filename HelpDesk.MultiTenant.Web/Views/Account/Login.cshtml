@@ -1,0 +1,11 @@
+﻿
+@{
+    ViewData["Title"] = "Login";
+}
+
+<form class="form" method="post">
+    @Html.AntiForgeryToken()
+    
+    <input name="userName" value="multi@no.io" class="form-control"/>&nbsp;<br/>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
