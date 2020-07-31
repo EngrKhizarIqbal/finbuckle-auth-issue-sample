@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -9,11 +10,13 @@ namespace HelpDesk.MultiTenant.Controllers
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly AspNetUserManager<IdentityUser> _userManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(SignInManager<IdentityUser> signInManager, AspNetUserManager<IdentityUser> userManager)
+        public AccountController(SignInManager<IdentityUser> signInManager, AspNetUserManager<IdentityUser> userManager, ILogger<AccountController> logger)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -54,6 +57,8 @@ namespace HelpDesk.MultiTenant.Controllers
             {
                 return Json(result);
             }
+
+            _logger.Log(LogLevel.Information, "User with email {0} logged in successfully.", user.Email);
 
             return RedirectToAction("Index", "Home");
         }
