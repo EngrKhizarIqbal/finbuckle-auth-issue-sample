@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HelpDesk.MultiTenant
@@ -37,7 +38,7 @@ namespace HelpDesk.MultiTenant
             services.AddIdentity<IdentityUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager<SignInManager<IdentityUser>>()
-                .AddUserManager<AspNetUserManager<IdentityUser>>()
+                .AddUserManager<AspNetUserManager<IdentityUser>>() 
                 .AddRoleManager<RoleManager<IdentityRole>>()
                 .AddDefaultTokenProviders();
             
@@ -64,9 +65,13 @@ namespace HelpDesk.MultiTenant
                 {
                     options.Cookie.Name = $"{tenantInfo.Identifier}.auth.cookie";
                     options.Cookie.Domain = $"{tenantInfo.Identifier}.{Configuration.GetValue<string>("WebsiteMainDomain")}";
+
+                    options.EventsType = typeof(CustomCookieAuthenticationEvents);
                 });
 
             services.AddTransient(s => s.GetService<IHttpContextAccessor>().HttpContext.User);
+
+            services.AddScoped<CustomCookieAuthenticationEvents>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -99,6 +104,61 @@ namespace HelpDesk.MultiTenant
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
+        }
+    }
+
+    public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
+    {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public CustomCookieAuthenticationEvents(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        public override Task ValidatePrincipal(CookieValidatePrincipalContext context)
+        {
+            return base.ValidatePrincipal(context);
+        }
+
+        public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            return base.RedirectToAccessDenied(context);
+        }
+
+        public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            return base.RedirectToLogin(context);
+        }
+
+        public override Task RedirectToLogout(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            return base.RedirectToLogout(context);
+        }
+
+        public override Task RedirectToReturnUrl(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            return base.RedirectToReturnUrl(context);
+        }
+
+        public override Task SignedIn(CookieSignedInContext context)
+        {
+            return base.SignedIn(context);
+        }
+
+        public override Task SigningIn(CookieSigningInContext context)
+        {
+            return base.SigningIn(context);
+        }
+
+        public override Task SigningOut(CookieSigningOutContext context)
+        {
+            foreach (var cookieKey in _httpContextAccessor.HttpContext.Request.Cookies.Keys.Where(w => w.EndsWith(".auth.cookie")))
+            {
+                _httpContextAccessor.HttpContext.Response.Cookies.Delete(cookieKey);
+            }
+            
+            return base.SigningOut(context);
         }
     }
 }

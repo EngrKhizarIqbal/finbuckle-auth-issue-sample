@@ -1,4 +1,5 @@
-﻿using HelpDesk.MultiTenant.Data;
+﻿using Finbuckle.MultiTenant;
+using HelpDesk.MultiTenant.Data;
 using HelpDesk.MultiTenant.Models;
 using HelpDesk.MultiTenant.MultiTenant;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
@@ -45,7 +47,7 @@ namespace HelpDesk.MultiTenant.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> UpdateTenant([FromForm] string name, [FromForm] string identifier)
+        public async Task<IActionResult> UpdateTenant([FromForm] string name, [FromForm] string identifier, [FromServices] IMultiTenantStore multiTenantStore)
         {
             var userId = _claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var tenant = await _quodyMutiTenantDbContext.QuodyTenantInfo.FirstOrDefaultAsync(f => f.UserId == userId);
@@ -58,6 +60,17 @@ namespace HelpDesk.MultiTenant.Controllers
 
             _quodyMutiTenantDbContext.Update(tenant);
             await _quodyMutiTenantDbContext.SaveChangesAsync();
+
+            var result = HttpContext.TrySetTenantInfo(
+                new TenantInfo(
+                    tenant.Id,
+                    tenant.Identifier,
+                    tenant.Name,
+                    tenant.ConnectionString,
+                    tenant.Items),
+                true);
+
+            await _signInManager.SignOutAsync();
 
             return RedirectPermanent($"{Request.Scheme}://{tenant.Identifier}.localhost:44343");
         }
